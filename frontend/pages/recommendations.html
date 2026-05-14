@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Recommendations — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="colleges.html">Colleges</a></li>
+    </ul>
+    <div class="nav-auth" id="navAuth">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-primary">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </div>
+</nav>
+
+<div class="reco-header">
+  <div class="container">
+    <h1>Your <span class="gradient-text">Recommendations</span></h1>
+    <p>Colleges ranked based on your profile, eligibility, and preferences.</p>
+    <div class="reco-summary" id="recoSummary"></div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <p class="results-info" id="resultsInfo">Finding best matches...</p>
+      <a href="../index.html" class="btn-outline btn-sm">🔄 New Search</a>
+    </div>
+    <div class="colleges-grid" id="recoGrid">
+      <div class="loading-spinner" style="grid-column:1/-1"><div class="spinner"></div>Analyzing your profile...</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><p>© 2025 CollegeFinder.</p></div>
+  </div>
+</footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+let params = {};
+let currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateNavbar();
+  try {
+    params = JSON.parse(sessionStorage.getItem('recoParams') || '{}');
+  } catch {}
+
+  // Show summary tags
+  const summary = document.getElementById('recoSummary');
+  const tags = [];
+  if (params.twelfth_percentage) tags.push(`12th: ${params.twelfth_percentage}%`);
+  if (params.exam_type) tags.push(`Exam: ${params.exam_type}`);
+  if (params.entrance_score) tags.push(`Score: ${params.entrance_score}`);
+  if (params.budget) tags.push(`Budget: ₹${(params.budget/100000).toFixed(1)}L`);
+  if (params.preferred_course) tags.push(`Course: ${params.preferred_course}`);
+  if (params.preferred_state) tags.push(`State: ${params.preferred_state}`);
+  if (params.category) tags.push(`Category: ${params.category}`);
+  summary.innerHTML = tags.map(t => `<span class="reco-tag">${t}</span>`).join('');
+
+  if (!Object.keys(params).length) {
+    document.getElementById('recoGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>No search parameters</h3><p><a href="../index.html" style="color:#60a5fa">Go back and fill the form</a></p></div>`;
+    return;
+  }
+  loadRecommendations(1);
+});
+
+async function loadRecommendations(page = 1) {
+  currentPage = page;
+  const grid = document.getElementById('recoGrid');
+  if (page === 1) grid.innerHTML = '<div class="loading-spinner" style="grid-column:1/-1"><div class="spinner"></div>Analyzing your profile...</div>';
+
+  const res = await api.recommend({ ...params, page, limit: 12 });
+  if (res.ok && res.data.results.length) {
+    document.getElementById('resultsInfo').textContent = `Found ${res.data.total} matching colleges`;
+    grid.innerHTML = res.data.results.map(r =>
+      collegeCardHTML(r.college, r.matchPercentage, r.eligible)
+    ).join('');
+    renderPagination(res.data.pages, page);
+  } else {
+    document.getElementById('resultsInfo').textContent = 'No matching colleges found';
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">😔</div>
+      <h3>No colleges found</h3>
+      <p>Try different scores, a higher budget, or remove state preference.</p>
+      <a href="../index.html" class="btn-primary" style="margin-top:16px">Try Again</a>
+    </div>`;
+  }
+}
+
+function renderPagination(totalPages, current) {
+  const el = document.getElementById('pagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadRecommendations(${i})">${i}</button>`;
+  }
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

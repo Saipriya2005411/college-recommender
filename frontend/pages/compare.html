@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compare Colleges — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="colleges.html">Colleges</a></li>
+    </ul>
+    <div class="nav-auth" id="navAuth">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-primary">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <h1>Compare <span class="gradient-text">Colleges</span></h1>
+    <p>Side-by-side comparison of fees, placements, rankings, and more</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <!-- Search to add colleges -->
+    <div class="glass-card" style="padding:24px;margin-bottom:32px">
+      <h3 style="margin-bottom:16px;font-size:1rem">Add Colleges to Compare (max 4)</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="compareSearch" placeholder="Search college name..." style="flex:1;min-width:200px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:.9rem;outline:none;font-family:inherit"/>
+        <button class="btn-primary btn-sm" onclick="searchToAdd()">Add</button>
+        <button class="btn-outline btn-sm" onclick="clearCompare()">Clear All</button>
+      </div>
+      <div id="searchResults" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+
+    <div id="compareContent">
+      <div class="empty-state"><div class="empty-icon">⚖️</div><h3>No colleges to compare</h3><p>Add colleges using the search above, or click "Compare" on any college detail page.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><p>© 2025 CollegeFinder.</p></div>
+  </div>
+</footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+let selectedIds = [];
+let allColleges = [];
+let compareData = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  updateNavbar();
+  selectedIds = JSON.parse(sessionStorage.getItem('compareList') || '[]');
+  const res = await api.getColleges({ limit: 100 });
+  if (res.ok) allColleges = res.data.colleges;
+  if (selectedIds.length) loadCompare();
+
+  document.getElementById('compareSearch').addEventListener('input', debounce(searchToAdd, 300));
+});
+
+function debounce(fn, delay) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); }; }
+
+async function searchToAdd() {
+  const q = document.getElementById('compareSearch').value.toLowerCase();
+  if (!q) { document.getElementById('searchResults').innerHTML = ''; return; }
+  const matches = allColleges.filter(c => c.collegeName.toLowerCase().includes(q)).slice(0, 6);
+  document.getElementById('searchResults').innerHTML = matches.map(c => `
+    <button class="btn-outline btn-sm" onclick="addToCompare('${c._id}', '${c.collegeName.replace(/'/g,"\\'")}')">
+      + ${c.collegeName.length > 30 ? c.collegeName.slice(0,30)+'...' : c.collegeName}
+    </button>`).join('');
+}
+
+async function addToCompare(id, name) {
+  if (selectedIds.length >= 4) { showToast('Max 4 colleges at a time', 'error'); return; }
+  if (selectedIds.includes(id)) { showToast('Already added', 'info'); return; }
+  selectedIds.push(id);
+  sessionStorage.setItem('compareList', JSON.stringify(selectedIds));
+  document.getElementById('compareSearch').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  showToast(`Added ${name}`, 'success');
+  loadCompare();
+}
+
+function clearCompare() {
+  selectedIds = [];
+  compareData = [];
+  sessionStorage.removeItem('compareList');
+  document.getElementById('compareContent').innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div><h3>No colleges to compare</h3></div>';
+}
+
+async function loadCompare() {
+  if (!selectedIds.length) return;
+  const promises = selectedIds.map(id => api.getCollege(id));
+  const results = await Promise.all(promises);
+  compareData = results.filter(r => r.ok).map(r => r.data.college);
+  renderCompare();
+}
+
+function removeCollege(id) {
+  selectedIds = selectedIds.filter(s => s !== id);
+  compareData = compareData.filter(c => c._id !== id);
+  sessionStorage.setItem('compareList', JSON.stringify(selectedIds));
+  if (compareData.length) renderCompare();
+  else clearCompare();
+}
+
+function renderCompare() {
+  if (!compareData.length) return;
+  const cols = compareData;
+
+  const rows = [
+    { label: '📍 Location', fn: c => `${c.city}, ${c.state}` },
+    { label: '🏛️ Type', fn: c => c.type },
+    { label: '🎖️ Tier', fn: c => c.tier },
+    { label: '🏆 NIRF Ranking', fn: c => `#${c.ranking || '—'}` },
+    { label: '📋 Accreditation', fn: c => c.accreditation },
+    { label: '📅 Established', fn: c => c.established || '—' },
+    { label: '✅ Placement %', fn: c => `${c.placements?.percentage || 0}%` },
+    { label: '💰 Avg Package', fn: c => formatCurrency(c.placements?.avgPackage) },
+    { label: '🚀 Highest Package', fn: c => formatCurrency(c.placements?.highestPackage) },
+    { label: '📚 Courses', fn: c => c.courses?.map(co => co.name).join(', ') || '—' },
+    { label: '💵 Min Fee (Tuition)', fn: c => formatCurrency(Math.min(...(c.courses||[]).map(co => co.fees?.tuition || 999999))) },
+    { label: '🏠 Hostel', fn: c => c.facilities?.hostel ? '✅ Yes' : '❌ No' },
+    { label: '🔬 Labs', fn: c => c.facilities?.labs ? '✅ Yes' : '❌ No' },
+    { label: '📶 WiFi', fn: c => c.facilities?.wifi ? '✅ Yes' : '❌ No' },
+    { label: '⭐ Rating', fn: c => `${c.avgRating?.toFixed(1) || '—'}/5` },
+  ];
+
+  document.getElementById('compareContent').innerHTML = `
+    <div class="compare-table-wrap glass-card" style="padding:0;overflow:hidden">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="width:180px">Feature</th>
+            ${cols.map(c => `<th>
+              <div style="font-size:.95rem;font-weight:700;margin-bottom:4px">${c.collegeName}</div>
+              <div style="color:var(--text-muted);font-size:.78rem;font-weight:400">${c.city}, ${c.state}</div>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                <a href="college-detail.html?id=${c._id}" class="btn-primary" style="font-size:.72rem;padding:4px 10px">View</a>
+                <button onclick="removeCollege('${c._id}')" class="btn-outline" style="font-size:.72rem;padding:4px 10px;color:#f87171;border-color:rgba(248,113,113,.3)">Remove</button>
+              </div>
+            </th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td style="font-weight:500;color:var(--text-muted)">${row.label}</td>
+              ${cols.map(c => `<td>${row.fn(c)}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

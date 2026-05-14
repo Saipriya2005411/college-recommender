@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="colleges.html">Colleges</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-auth" id="navAuth">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-primary">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <h1>About <span class="gradient-text">CollegeFinder</span></h1>
+    <p>India's smartest college recommendation platform — built for students, by students.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-bottom:80px">
+      <div>
+        <h2 style="font-size:2rem;margin-bottom:16px">Our <span class="gradient-text">Mission</span></h2>
+        <p style="color:var(--text-muted);line-height:1.9;margin-bottom:16px">CollegeFinder was built to solve one of India's biggest student challenges — finding the right college. With hundreds of engineering colleges across the country, and limited guidance, students often make uninformed decisions.</p>
+        <p style="color:var(--text-muted);line-height:1.9">We use a smart recommendation engine that considers your academic scores, entrance rank, budget, category, and preferences to match you with colleges where you'll genuinely thrive.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="glass-card" style="padding:24px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">🏛️</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif">20+</div>
+          <div style="color:var(--text-muted);font-size:.85rem">Colleges Listed</div>
+        </div>
+        <div class="glass-card" style="padding:24px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">👨‍🎓</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif">50K+</div>
+          <div style="color:var(--text-muted);font-size:.85rem">Students Helped</div>
+        </div>
+        <div class="glass-card" style="padding:24px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">🤖</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif">AI</div>
+          <div style="color:var(--text-muted);font-size:.85rem">Powered Engine</div>
+        </div>
+        <div class="glass-card" style="padding:24px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">⚡</div>
+          <div style="font-size:1.8rem;font-weight:700;font-family:'Syne',sans-serif">Free</div>
+          <div style="color:var(--text-muted);font-size:.85rem">Always Free</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="section-header">
+      <h2>Built With <span class="gradient-text">Modern Tech</span></h2>
+      <p>A full-stack MERN application with industry-standard practices</p>
+    </div>
+    <div class="steps-grid" style="margin-bottom:80px">
+      <div class="step-card">
+        <div class="step-icon">⚛️</div>
+        <h3>Frontend</h3>
+        <p>HTML5, CSS3, Vanilla JavaScript with glassmorphism UI, responsive design, and Chart.js analytics.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon">🟢</div>
+        <h3>Backend</h3>
+        <p>Node.js + Express.js REST APIs with JWT authentication, bcrypt password hashing, and CORS support.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon">🍃</div>
+        <h3>Database</h3>
+        <p>MongoDB with Mongoose ODM — stores colleges, users, saved lists, reviews, and analytics data.</p>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section-header">
+      <h2>Key <span class="gradient-text">Features</span></h2>
+    </div>
+    <div class="colleges-grid" style="margin-bottom:40px">
+      ${[
+        ['🔍','Smart Recommendations','Ranks colleges by eligibility, placement, fees, distance, and your category.'],
+        ['🔐','Secure Auth','JWT-based login/register with bcrypt password hashing.'],
+        ['📊','Analytics Dashboard','Visual charts for fee comparison and placement statistics.'],
+        ['⚖️','College Comparison','Compare up to 4 colleges side-by-side on 15+ parameters.'],
+        ['🔖','Save Colleges','Bookmark colleges and revisit them from your dashboard.'],
+        ['⚙️','Admin Panel','Full CRUD for colleges, user management, and platform analytics.'],
+        ['🤖','AI Chatbot','Natural language college search — ask like "affordable CSE in Odisha".'],
+        ['📱','Responsive','Works perfectly on mobile, tablet, and desktop.'],
+      ].map(([icon,title,desc]) => `
+        <div class="step-card" style="text-align:left;padding:28px">
+          <div style="font-size:1.8rem;margin-bottom:10px">${icon}</div>
+          <h3 style="font-size:1rem;margin-bottom:6px">${title}</h3>
+          <p style="font-size:.85rem">${desc}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="text-align:center">
+      <a href="../index.html" class="btn-primary">🚀 Try It Now</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><p>© 2025 CollegeFinder. Built with ❤️ for students across India.</p></div>
+  </div>
+</footer>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => updateNavbar());</script>
+</body>
+</html>

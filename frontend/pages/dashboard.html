@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <div class="nav-auth" id="navAuth"></div>
+  </div>
+</nav>
+
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">🎓 CollegeFinder</div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="avatarInitial">S</div>
+      <div class="user-info">
+        <div class="name" id="sidebarName">Loading...</div>
+        <div class="role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="active"><span class="icon">📊</span> Dashboard</a>
+      <a href="recommendations.html"><span class="icon">🔍</span> Get Recommendations</a>
+      <a href="#saved" onclick="showSection('saved')"><span class="icon">🔖</span> Saved Colleges</a>
+      <a href="compare.html"><span class="icon">⚖️</span> Compare Colleges</a>
+      <a href="colleges.html"><span class="icon">🏛️</span> All Colleges</a>
+      <a href="#profile" onclick="showSection('profile')" style="margin-top:16px"><span class="icon">👤</span> Profile</a>
+      <a href="#" onclick="Auth.logout()" style="color:#f87171"><span class="icon">🚪</span> Logout</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dashboard-main">
+    <!-- DASHBOARD SECTION -->
+    <div id="section-dashboard">
+      <h1 class="page-title" id="welcomeMsg">Welcome back! 👋</h1>
+      <p class="page-subtitle">Here's your college search overview.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🔖</div>
+          <div class="stat-value" id="statSaved">0</div>
+          <div class="stat-label">Saved Colleges</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👁️</div>
+          <div class="stat-value" id="statViewed">0</div>
+          <div class="stat-label">Recently Viewed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value">20+</div>
+          <div class="stat-label">Colleges Available</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-value">IIT+</div>
+          <div class="stat-label">Top Tier Options</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row dashboard-section">
+        <div class="chart-card">
+          <h3 style="margin-bottom:16px; font-size:1rem">Fee Comparison (Top Saved)</h3>
+          <canvas id="feeChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 style="margin-bottom:16px; font-size:1rem">Placement % Comparison</h3>
+          <canvas id="placementChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Recently Viewed -->
+      <div class="dashboard-section">
+        <h3>Recently Viewed</h3>
+        <div class="colleges-grid" id="recentGrid">
+          <div class="loading-spinner">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVED SECTION -->
+    <div id="section-saved" class="hidden">
+      <h1 class="page-title">Saved Colleges</h1>
+      <p class="page-subtitle">Colleges you've bookmarked for later.</p>
+      <div class="colleges-grid" id="savedGrid">
+        <div class="loading-spinner">Loading...</div>
+      </div>
+    </div>
+
+    <!-- PROFILE SECTION -->
+    <div id="section-profile" class="hidden">
+      <h1 class="page-title">My Profile</h1>
+      <p class="page-subtitle">Update your information and preferences.</p>
+      <div class="glass-card" style="max-width:600px; padding:36px">
+        <div id="profileError" class="error-msg hidden"></div>
+        <div id="profileSuccess" class="success-msg hidden"></div>
+        <form id="profileForm">
+          <div class="form-group" style="margin-bottom:16px">
+            <label style="font-size:.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Name</label>
+            <input type="text" id="pName" style="width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:.95rem;outline:none;font-family:inherit"/>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label style="font-size:.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Mobile</label>
+            <input type="tel" id="pMobile" style="width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:.95rem;outline:none;font-family:inherit"/>
+          </div>
+          <div class="form-group" style="margin-bottom:24px">
+            <label style="font-size:.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">State</label>
+            <select id="pState" style="width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:.95rem;outline:none;font-family:inherit">
+              <option>Odisha</option><option>Delhi</option><option>Maharashtra</option><option>Karnataka</option>
+              <option>Tamil Nadu</option><option>Telangana</option><option>Rajasthan</option><option>Punjab</option>
+              <option>Gujarat</option><option>Uttar Pradesh</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+requireAuth();
+let dashData = null;
+
+function showSection(name) {
+  ['dashboard','saved','profile'].forEach(s => {
+    document.getElementById(`section-${s}`).classList.add('hidden');
+  });
+  document.getElementById(`section-${name}`).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  updateNavbar();
+  const user = Auth.getUser();
+  if (user) {
+    document.getElementById('welcomeMsg').textContent = `Welcome back, ${user.name}! 👋`;
+    document.getElementById('sidebarName').textContent = user.name;
+    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('pName').value = user.name;
+  }
+  loadDashboard();
+});
+
+async function loadDashboard() {
+  const res = await api.getDashboard();
+  if (!res.ok) return;
+  dashData = res.data.dashboard;
+  const { totalSaved, totalRecent, savedColleges, recentlyViewed } = dashData;
+
+  document.getElementById('statSaved').textContent = totalSaved;
+  document.getElementById('statViewed').textContent = totalRecent;
+
+  // Recently viewed grid
+  const recentGrid = document.getElementById('recentGrid');
+  if (recentlyViewed.length) {
+    recentGrid.innerHTML = recentlyViewed.slice(0,3).map(c => collegeCardHTML(c)).join('');
+  } else {
+    recentGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">👀</div><h3>No colleges viewed yet</h3><p>Browse colleges to see them here.</p></div>`;
+  }
+
+  // Saved grid
+  const savedGrid = document.getElementById('savedGrid');
+  if (savedColleges.length) {
+    savedGrid.innerHTML = savedColleges.map(c => collegeCardHTML(c)).join('');
+  } else {
+    savedGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔖</div><h3>No saved colleges</h3><p>Click Save on any college card to bookmark it.</p></div>`;
+  }
+
+  // Charts
+  renderCharts(savedColleges.length ? savedColleges : recentlyViewed);
+}
+
+function renderCharts(colleges) {
+  if (!colleges.length) return;
+  const labels = colleges.slice(0,5).map(c => c.shortName || c.collegeName.split(' ').slice(0,2).join(' '));
+  const fees = colleges.slice(0,5).map(c => c.cheapestFee ? c.cheapestFee/100000 : 2);
+  const placements = colleges.slice(0,5).map(c => c.placements?.percentage || 0);
+
+  const feeCtx = document.getElementById('feeChart').getContext('2d');
+  new Chart(feeCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Fee (Lakhs ₹)', data: fees, backgroundColor: 'rgba(99,102,241,0.6)', borderColor: '#6366f1', borderWidth: 1, borderRadius: 6 }]
+    },
+    options: { plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+
+  const placCtx = document.getElementById('placementChart').getContext('2d');
+  new Chart(placCtx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: placements, backgroundColor: ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b'], borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } } }
+  });
+}
+
+// Profile form
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const res = await api.updateProfile({
+    name: document.getElementById('pName').value,
+    mobile: document.getElementById('pMobile').value,
+    state: document.getElementById('pState').value,
+  });
+  const suc = document.getElementById('profileSuccess');
+  const err = document.getElementById('profileError');
+  if (res.ok) {
+    suc.textContent = 'Profile updated!';
+    suc.classList.remove('hidden');
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    setTimeout(() => suc.classList.add('hidden'), 2000);
+  } else {
+    err.textContent = res.data.message;
+    err.classList.remove('hidden');
+  }
+});
+</script>
+</body>
+</html>

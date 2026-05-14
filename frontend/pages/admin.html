@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder Admin</span></a>
+    <div class="nav-auth" id="navAuth"></div>
+  </div>
+</nav>
+
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">⚙️ Admin Panel</div>
+    <div class="sidebar-user">
+      <div class="user-avatar" style="background:linear-gradient(135deg,#ef4444,#dc2626)">A</div>
+      <div class="user-info"><div class="name">Admin</div><div class="role">Super Admin</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" onclick="showAdminSection('stats')" class="active"><span class="icon">📊</span> Dashboard</a>
+      <a href="#" onclick="showAdminSection('colleges')"><span class="icon">🏛️</span> Manage Colleges</a>
+      <a href="#" onclick="showAdminSection('users')"><span class="icon">👥</span> Manage Users</a>
+      <a href="colleges.html"><span class="icon">🌐</span> View Site</a>
+      <a href="#" onclick="Auth.logout()" style="color:#f87171;margin-top:16px"><span class="icon">🚪</span> Logout</a>
+    </nav>
+  </aside>
+
+  <main class="dashboard-main">
+    <!-- STATS -->
+    <div id="admin-stats">
+      <h1 class="page-title">Admin Dashboard</h1>
+      <p class="page-subtitle">Overview of the platform.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">🏛️</div><div class="stat-value" id="sTotalColleges">—</div><div class="stat-label">Total Colleges</div></div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="sTotalUsers">—</div><div class="stat-label">Registered Students</div></div>
+        <div class="stat-card"><div class="stat-icon">🥇</div><div class="stat-value" id="sTier1">—</div><div class="stat-label">Tier 1 Colleges</div></div>
+        <div class="stat-card"><div class="stat-icon">🥈</div><div class="stat-value" id="sTier2">—</div><div class="stat-label">Tier 2 Colleges</div></div>
+      </div>
+      <div class="charts-row" style="margin-top:24px">
+        <div class="chart-card">
+          <h3 style="margin-bottom:16px;font-size:1rem">Colleges by State (Top 10)</h3>
+          <canvas id="stateChart" height="250"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 style="margin-bottom:16px;font-size:1rem">Tier Distribution</h3>
+          <canvas id="tierChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLEGES -->
+    <div id="admin-colleges" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 class="page-title" style="margin-bottom:4px">Manage Colleges</h1>
+          <p style="color:var(--text-muted)">Add, edit, or remove colleges.</p>
+        </div>
+        <button class="btn-primary" onclick="openAddModal()">+ Add College</button>
+      </div>
+      <div class="glass-card" style="padding:0;overflow:hidden">
+        <table class="admin-table" id="collegesTable">
+          <thead><tr><th>Name</th><th>State</th><th>Type</th><th>Tier</th><th>Ranking</th><th>Placement</th><th>Actions</th></tr></thead>
+          <tbody id="collegesBody"><tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="admin-users" class="hidden">
+      <h1 class="page-title" style="margin-bottom:4px">Manage Users</h1>
+      <p class="page-subtitle">View all registered students.</p>
+      <div class="glass-card" style="padding:0;overflow:hidden">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>State</th><th>Saved</th><th>Joined</th></tr></thead>
+          <tbody id="usersBody"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay hidden" id="collegeModal">
+  <div class="modal-box">
+    <h2 id="modalTitle">Add College</h2>
+    <form class="modal-form" id="collegeForm">
+      <input type="hidden" id="editCollegeId"/>
+      <div class="form-grid-2">
+        <div class="form-group"><label>College Name *</label><input type="text" id="fName" required/></div>
+        <div class="form-group"><label>Short Name</label><input type="text" id="fShortName"/></div>
+        <div class="form-group"><label>State *</label>
+          <select id="fState" required>
+            <option>Delhi</option><option>Maharashtra</option><option>Karnataka</option><option>Tamil Nadu</option>
+            <option>Telangana</option><option>Odisha</option><option>Rajasthan</option><option>Punjab</option>
+            <option>Gujarat</option><option>Uttar Pradesh</option>
+          </select>
+        </div>
+        <div class="form-group"><label>City</label><input type="text" id="fCity"/></div>
+        <div class="form-group"><label>Type</label>
+          <select id="fType"><option>Government</option><option>Private</option><option>Deemed</option><option>Autonomous</option></select>
+        </div>
+        <div class="form-group"><label>Tier</label>
+          <select id="fTier"><option>Tier 1</option><option>Tier 2</option><option>Tier 3</option></select>
+        </div>
+        <div class="form-group"><label>Ranking</label><input type="number" id="fRanking"/></div>
+        <div class="form-group"><label>Accreditation</label><input type="text" id="fAccreditation" placeholder="NAAC A+"/></div>
+        <div class="form-group"><label>Placement %</label><input type="number" id="fPlacement" min="0" max="100"/></div>
+        <div class="form-group"><label>Avg Package (₹)</label><input type="number" id="fAvgPkg"/></div>
+        <div class="form-group"><label>Highest Package (₹)</label><input type="number" id="fHighPkg"/></div>
+        <div class="form-group"><label>Established Year</label><input type="number" id="fEstablished"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="fDescription"></textarea></div>
+      <div class="form-group"><label>Image URL</label><input type="text" id="fImageURL"/></div>
+      <div class="form-group"><label>Website</label><input type="text" id="fWebsite"/></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fFeatured"/> Featured
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fHostel"/> Hostel
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fLabs" checked/> Labs
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fLibrary" checked/> Library
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fSports"/> Sports
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="fWifi" checked/> WiFi
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="modalSubmitBtn">Add College</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+requireAdmin();
+let allAdminColleges = [];
+
+function showAdminSection(name) {
+  ['stats','colleges','users'].forEach(s => {
+    document.getElementById(`admin-${s}`).classList.add('hidden');
+  });
+  document.getElementById(`admin-${name}`).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+
+  if (name === 'colleges') loadAdminColleges();
+  if (name === 'users') loadAdminUsers();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  updateNavbar();
+  loadStats();
+});
+
+async function loadStats() {
+  const res = await api.getAdminStats();
+  if (!res.ok) { showToast('Failed to load stats', 'error'); return; }
+  const { totalColleges, totalUsers, tier1, tier2, tier3, stateStats } = res.data.stats;
+  document.getElementById('sTotalColleges').textContent = totalColleges;
+  document.getElementById('sTotalUsers').textContent = totalUsers;
+  document.getElementById('sTier1').textContent = tier1;
+  document.getElementById('sTier2').textContent = tier2;
+
+  // State chart
+  const stateCtx = document.getElementById('stateChart').getContext('2d');
+  new Chart(stateCtx, {
+    type: 'bar',
+    data: {
+      labels: stateStats.map(s => s._id),
+      datasets: [{ label: 'Colleges', data: stateStats.map(s => s.count), backgroundColor: 'rgba(99,102,241,0.6)', borderColor: '#6366f1', borderRadius: 6 }]
+    },
+    options: { plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+
+  // Tier chart
+  const tierCtx = document.getElementById('tierChart').getContext('2d');
+  new Chart(tierCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Tier 1', 'Tier 2', 'Tier 3'],
+      datasets: [{ data: [tier1, tier2, tier3], backgroundColor: ['#fbbf24','#6366f1','#94a3b8'], borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { labels: { color: '#94a3b8' } } } }
+  });
+}
+
+async function loadAdminColleges() {
+  const res = await api.getColleges({ limit: 100 });
+  if (!res.ok) return;
+  allAdminColleges = res.data.colleges;
+  const tbody = document.getElementById('collegesBody');
+  tbody.innerHTML = allAdminColleges.map(c => `
+    <tr>
+      <td><strong>${c.collegeName}</strong></td>
+      <td>${c.state}</td>
+      <td>${c.type}</td>
+      <td>${c.tier}</td>
+      <td>#${c.ranking || '—'}</td>
+      <td>${c.placements?.percentage || 0}%</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn-outline btn-sm" onclick="openEditModal('${c._id}')">Edit</button>
+          <button class="btn-primary btn-sm btn-danger" onclick="deleteCollege('${c._id}', '${c.collegeName.replace(/'/g,"\\'")}')">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadAdminUsers() {
+  const res = await api.getAdminUsers();
+  if (!res.ok) return;
+  document.getElementById('usersBody').innerHTML = res.data.users.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td>${u.email}</td>
+      <td>${u.mobile || '—'}</td>
+      <td>${u.state || '—'}</td>
+      <td>${u.savedColleges?.length || 0}</td>
+      <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+}
+
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'Add College';
+  document.getElementById('modalSubmitBtn').textContent = 'Add College';
+  document.getElementById('editCollegeId').value = '';
+  document.getElementById('collegeForm').reset();
+  document.getElementById('collegeModal').classList.remove('hidden');
+}
+
+function openEditModal(id) {
+  const c = allAdminColleges.find(col => col._id === id);
+  if (!c) return;
+  document.getElementById('modalTitle').textContent = 'Edit College';
+  document.getElementById('modalSubmitBtn').textContent = 'Update College';
+  document.getElementById('editCollegeId').value = id;
+  document.getElementById('fName').value = c.collegeName || '';
+  document.getElementById('fShortName').value = c.shortName || '';
+  document.getElementById('fState').value = c.state || '';
+  document.getElementById('fCity').value = c.city || '';
+  document.getElementById('fType').value = c.type || 'Private';
+  document.getElementById('fTier').value = c.tier || 'Tier 2';
+  document.getElementById('fRanking').value = c.ranking || '';
+  document.getElementById('fAccreditation').value = c.accreditation || '';
+  document.getElementById('fPlacement').value = c.placements?.percentage || '';
+  document.getElementById('fAvgPkg').value = c.placements?.avgPackage || '';
+  document.getElementById('fHighPkg').value = c.placements?.highestPackage || '';
+  document.getElementById('fEstablished').value = c.established || '';
+  document.getElementById('fDescription').value = c.description || '';
+  document.getElementById('fImageURL').value = c.imageURL || '';
+  document.getElementById('fWebsite').value = c.website || '';
+  document.getElementById('fFeatured').checked = c.featured || false;
+  document.getElementById('fHostel').checked = c.facilities?.hostel || false;
+  document.getElementById('fLabs').checked = c.facilities?.labs || false;
+  document.getElementById('fLibrary').checked = c.facilities?.library || false;
+  document.getElementById('fSports').checked = c.facilities?.sports || false;
+  document.getElementById('fWifi').checked = c.facilities?.wifi || false;
+  document.getElementById('collegeModal').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('collegeModal').classList.add('hidden'); }
+
+document.getElementById('collegeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('editCollegeId').value;
+  const data = {
+    collegeName: document.getElementById('fName').value,
+    shortName: document.getElementById('fShortName').value,
+    state: document.getElementById('fState').value,
+    city: document.getElementById('fCity').value,
+    type: document.getElementById('fType').value,
+    tier: document.getElementById('fTier').value,
+    ranking: parseInt(document.getElementById('fRanking').value) || undefined,
+    accreditation: document.getElementById('fAccreditation').value,
+    description: document.getElementById('fDescription').value,
+    imageURL: document.getElementById('fImageURL').value,
+    website: document.getElementById('fWebsite').value,
+    established: parseInt(document.getElementById('fEstablished').value) || undefined,
+    featured: document.getElementById('fFeatured').checked,
+    placements: {
+      percentage: parseInt(document.getElementById('fPlacement').value) || 0,
+      avgPackage: parseInt(document.getElementById('fAvgPkg').value) || 0,
+      highestPackage: parseInt(document.getElementById('fHighPkg').value) || 0,
+    },
+    facilities: {
+      hostel: document.getElementById('fHostel').checked,
+      labs: document.getElementById('fLabs').checked,
+      library: document.getElementById('fLibrary').checked,
+      sports: document.getElementById('fSports').checked,
+      wifi: document.getElementById('fWifi').checked,
+    }
+  };
+
+  const res = id ? await api.updateCollege(id, data) : await api.addCollege(data);
+  if (res.ok) {
+    showToast(id ? 'College updated!' : 'College added!', 'success');
+    closeModal();
+    loadAdminColleges();
+  } else {
+    showToast(res.data.message || 'Error', 'error');
+  }
+});
+
+async function deleteCollege(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  const res = await api.deleteCollege(id);
+  if (res.ok) { showToast('College removed', 'success'); loadAdminColleges(); loadStats(); }
+  else showToast('Error deleting', 'error');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Colleges — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="colleges.html" class="active">Colleges</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-auth" id="navAuth">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-primary">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <h1>Explore <span class="gradient-text">All Colleges</span></h1>
+    <p>Browse, filter, and compare colleges across India</p>
+  </div>
+</div>
+
+<div class="filters-bar">
+  <div class="container">
+    <div class="filters-inner">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search college name, city, state..."/>
+      </div>
+      <select class="filter-select" id="filterState">
+        <option value="">All States</option>
+        <option>Delhi</option><option>Maharashtra</option><option>Karnataka</option>
+        <option>Tamil Nadu</option><option>Telangana</option><option>Odisha</option>
+        <option>Rajasthan</option><option>Punjab</option><option>Gujarat</option><option>Uttar Pradesh</option>
+      </select>
+      <select class="filter-select" id="filterTier">
+        <option value="">All Tiers</option>
+        <option value="Tier 1">Tier 1</option>
+        <option value="Tier 2">Tier 2</option>
+        <option value="Tier 3">Tier 3</option>
+      </select>
+      <select class="filter-select" id="filterType">
+        <option value="">All Types</option>
+        <option>Government</option><option>Private</option><option>Deemed</option><option>Autonomous</option>
+      </select>
+      <select class="filter-select" id="filterCourse">
+        <option value="">All Courses</option>
+        <option value="Computer Science">CSE</option>
+        <option value="AI/ML">AI/ML</option>
+        <option value="ECE">ECE</option>
+        <option value="Mechanical">Mechanical</option>
+      </select>
+      <button class="btn-primary btn-sm" onclick="loadColleges(1)">Apply</button>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <p class="results-info" id="resultsInfo">Loading colleges...</p>
+    <div class="colleges-grid" id="collegesGrid">
+      <div class="loading-spinner"><div class="spinner"></div>Loading colleges...</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><p>© 2025 CollegeFinder. Built with ❤️ for students across India.</p></div>
+  </div>
+</footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+let currentPage = 1;
+let searchTimeout;
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateNavbar();
+  loadColleges(1);
+
+  document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => loadColleges(1), 500);
+  });
+});
+
+async function loadColleges(page = 1) {
+  currentPage = page;
+  const grid = document.getElementById('collegesGrid');
+  const info = document.getElementById('resultsInfo');
+  grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>Loading...</div>';
+
+  const params = {
+    page,
+    limit: 12,
+    state: document.getElementById('filterState').value,
+    tier: document.getElementById('filterTier').value,
+    type: document.getElementById('filterType').value,
+    course: document.getElementById('filterCourse').value,
+    search: document.getElementById('searchInput').value,
+  };
+  Object.keys(params).forEach(k => !params[k] && delete params[k]);
+
+  const res = await api.getColleges(params);
+  if (res.ok && res.data.colleges.length) {
+    info.textContent = `Showing ${res.data.colleges.length} of ${res.data.total} colleges`;
+    grid.innerHTML = res.data.colleges.map(c => collegeCardHTML(c)).join('');
+    renderPagination(res.data.pages, page);
+  } else {
+    info.textContent = '0 colleges found';
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>No colleges found</h3><p>Try adjusting your filters.</p></div>`;
+    document.getElementById('pagination').innerHTML = '';
+  }
+}
+
+function renderPagination(totalPages, current) {
+  const el = document.getElementById('pagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadColleges(${i})">${i}</button>`;
+  }
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

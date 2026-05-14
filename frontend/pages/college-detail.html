@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>College Detail — CollegeFinder</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-container">
+    <a href="../index.html" class="nav-logo"><span class="logo-icon">🎓</span><span>CollegeFinder</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="colleges.html">Colleges</a></li>
+    </ul>
+    <div class="nav-auth" id="navAuth">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-primary">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </div>
+</nav>
+
+<div id="pageContent">
+  <div class="loading-spinner" style="padding-top:120px"><div class="spinner"></div>Loading college...</div>
+</div>
+
+<footer class="footer" style="margin-top:60px">
+  <div class="container">
+    <div class="footer-bottom"><p>© 2025 CollegeFinder.</p></div>
+  </div>
+</footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+const collegeId = new URLSearchParams(window.location.search).get('id');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  updateNavbar();
+  if (!collegeId) { document.getElementById('pageContent').innerHTML = '<div class="empty-state" style="padding-top:120px"><h3>College not found</h3></div>'; return; }
+
+  // Track view
+  if (Auth.isLoggedIn()) api.viewCollege(collegeId);
+
+  const res = await api.getCollege(collegeId);
+  if (!res.ok) { document.getElementById('pageContent').innerHTML = '<div class="empty-state" style="padding-top:120px"><h3>Error loading college</h3></div>'; return; }
+  renderCollege(res.data.college);
+});
+
+function renderCollege(c) {
+  const typeClass = c.type === 'Government' ? 'tag-gov' : 'tag-private';
+  document.title = `${c.collegeName} — CollegeFinder`;
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="college-hero">
+      <div class="container">
+        <div class="college-hero-grid">
+          <div>
+            <div class="college-logo">${c.imageURL ? `<img src="${c.imageURL}" style="width:100%;height:100%;object-fit:contain;border-radius:12px" onerror="this.parentElement.innerHTML='🏛️'">` : '🏛️'}</div>
+            <h1 class="college-name">${c.collegeName}</h1>
+            <div class="college-meta">
+              <span>📍 ${c.city}, ${c.state}</span>
+              <span>🏆 Ranked #${c.ranking || '—'} (NIRF)</span>
+              <span>📅 Est. ${c.established || '—'}</span>
+              <span>⭐ ${c.avgRating?.toFixed(1) || '—'} (${c.totalReviews} reviews)</span>
+            </div>
+            <div class="college-tags">
+              <span class="tag ${typeClass}">${c.type}</span>
+              <span class="tag tag-tier">${c.tier}</span>
+              <span class="tag tag-gov">${c.accreditation}</span>
+            </div>
+          </div>
+          <div class="college-actions-box">
+            <button class="btn-primary" id="saveBtn" onclick="handleSave()">🔖 Save College</button>
+            <button class="btn-outline" onclick="addToCompare()">⚖️ Compare</button>
+            ${c.website ? `<a href="${c.website}" target="_blank" class="btn-outline">🌐 Visit Website</a>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" style="padding-top:32px">
+      <div class="college-tabs">
+        <button class="tab-btn active" onclick="switchTab('overview', this)">Overview</button>
+        <button class="tab-btn" onclick="switchTab('courses', this)">Courses & Fees</button>
+        <button class="tab-btn" onclick="switchTab('placements', this)">Placements</button>
+        <button class="tab-btn" onclick="switchTab('facilities', this)">Facilities</button>
+        <button class="tab-btn" onclick="switchTab('reviews', this)">Reviews</button>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="tab-content active" id="tab-overview">
+        <div class="detail-grid">
+          <div>
+            <div class="info-section">
+              <h3>About</h3>
+              <p style="color:var(--text-muted);line-height:1.8">${c.description || 'No description available.'}</p>
+            </div>
+            <div class="info-section">
+              <h3>Key Facts</h3>
+              <table class="info-table">
+                <tr><td>College Name</td><td>${c.collegeName}</td></tr>
+                <tr><td>Location</td><td>${c.city}, ${c.state}</td></tr>
+                <tr><td>Type</td><td>${c.type}</td></tr>
+                <tr><td>Established</td><td>${c.established || '—'}</td></tr>
+                <tr><td>NIRF Ranking</td><td>#${c.nirfRanking || c.ranking || '—'}</td></tr>
+                <tr><td>Accreditation</td><td>${c.accreditation}</td></tr>
+                <tr><td>Website</td><td>${c.website ? `<a href="${c.website}" target="_blank" style="color:#60a5fa">${c.website}</a>` : '—'}</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="sticky-card">
+            <div class="glass-card" style="padding:24px">
+              <h3 style="margin-bottom:16px;font-size:1rem">Quick Stats</h3>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <span style="color:var(--text-muted)">Placement %</span>
+                  <span style="font-weight:600;color:var(--success)">${c.placements?.percentage}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <span style="color:var(--text-muted)">Avg Package</span>
+                  <span style="font-weight:600">${formatCurrency(c.placements?.avgPackage)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <span style="color:var(--text-muted)">Highest Package</span>
+                  <span style="font-weight:600">${formatCurrency(c.placements?.highestPackage)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 0">
+                  <span style="color:var(--text-muted)">Total Courses</span>
+                  <span style="font-weight:600">${c.courses?.length || 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COURSES -->
+      <div class="tab-content" id="tab-courses">
+        <div class="glass-card" style="padding:24px;overflow:hidden">
+          <table class="courses-table">
+            <thead>
+              <tr>
+                <th>Course</th><th>Seats</th><th>Duration</th>
+                <th>Tuition Fee</th><th>Hostel</th><th>Total/yr</th>
+                <th>General Cutoff</th><th>Exams</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${c.courses?.map(course => `
+                <tr>
+                  <td><strong>${course.name}</strong></td>
+                  <td>${course.seats || '—'}</td>
+                  <td>${course.duration || '4 Years'}</td>
+                  <td>${formatCurrency(course.fees?.tuition)}</td>
+                  <td>${formatCurrency(course.fees?.hostel)}</td>
+                  <td style="color:var(--warning);font-weight:600">${formatCurrency((course.fees?.tuition||0)+(course.fees?.hostel||0)+(course.fees?.other||0))}</td>
+                  <td>${course.cutoff?.general ? course.cutoff.general + (course.name.includes('JEE') ? ' rank' : '%') : '—'}</td>
+                  <td style="font-size:0.8rem;color:var(--text-muted)">${course.examAccepted?.join(', ') || '—'}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No course data</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PLACEMENTS -->
+      <div class="tab-content" id="tab-placements">
+        <div class="placement-stats">
+          <div class="placement-stat"><div class="big">${c.placements?.percentage}%</div><div class="small">Placement Rate</div></div>
+          <div class="placement-stat"><div class="big">${formatCurrency(c.placements?.avgPackage)}</div><div class="small">Average Package</div></div>
+          <div class="placement-stat"><div class="big">${formatCurrency(c.placements?.highestPackage)}</div><div class="small">Highest Package</div></div>
+        </div>
+        <div class="glass-card" style="padding:24px">
+          <h3 style="margin-bottom:16px;font-size:1rem">Top Recruiters</h3>
+          <div class="recruiter-list">
+            ${c.placements?.topRecruiters?.map(r => `<span class="recruiter-tag">🏢 ${r}</span>`).join('') || '<span style="color:var(--text-muted)">Data not available</span>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- FACILITIES -->
+      <div class="tab-content" id="tab-facilities">
+        <div class="glass-card" style="padding:24px">
+          <h3 style="margin-bottom:20px;font-size:1rem">Campus Facilities</h3>
+          <div class="facility-grid">
+            ${Object.entries(c.facilities || {}).map(([key, val]) => `
+              <div class="facility-item ${val ? 'yes' : 'no'}">
+                <div style="font-size:1.5rem;margin-bottom:6px">${getFacilityIcon(key)}</div>
+                <div>${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+                <div style="font-size:0.75rem;margin-top:2px">${val ? '✅ Available' : '❌ Not Available'}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="tab-content" id="tab-reviews">
+        ${Auth.isLoggedIn() ? `
+          <div class="glass-card" style="padding:24px;margin-bottom:24px">
+            <h3 style="margin-bottom:16px;font-size:1rem">Write a Review</h3>
+            <div id="reviewError" class="error-msg hidden"></div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:.82rem;color:var(--text-muted)">Rating</label>
+              <select id="reviewRating" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:inherit;margin-left:8px">
+                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                <option value="4">⭐⭐⭐⭐ Good</option>
+                <option value="3">⭐⭐⭐ Average</option>
+                <option value="2">⭐⭐ Below Average</option>
+                <option value="1">⭐ Poor</option>
+              </select>
+            </div>
+            <textarea id="reviewComment" placeholder="Share your experience..." style="width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-family:inherit;min-height:80px;outline:none;resize:vertical"></textarea>
+            <button class="btn-primary btn-sm" style="margin-top:12px" onclick="submitReview()">Submit Review</button>
+          </div>
+        ` : `<div class="glass-card" style="padding:20px;margin-bottom:24px;text-align:center;color:var(--text-muted)">
+          <a href="login.html" style="color:#60a5fa">Login</a> to write a review
+        </div>`}
+        <div class="reviews-list" id="reviewsList">
+          ${c.reviews?.length ? c.reviews.map(r => `
+            <div class="review-card">
+              <div class="review-header">
+                <div class="review-avatar">${(r.userId?.name || 'A').charAt(0)}</div>
+                <div>
+                  <div style="font-weight:600;font-size:.9rem">${r.userId?.name || 'Anonymous'}</div>
+                  <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                </div>
+                <div style="margin-left:auto;color:var(--text-muted);font-size:.8rem">${new Date(r.date).toLocaleDateString()}</div>
+              </div>
+              <p style="color:var(--text-muted);font-size:.88rem">${r.comment || ''}</p>
+            </div>
+          `).join('') : '<div class="empty-state"><div class="empty-icon">💬</div><h3>No reviews yet</h3><p>Be the first to review!</p></div>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+function getFacilityIcon(key) {
+  const icons = { hostel:'🏠', labs:'🔬', library:'📚', sports:'⚽', wifi:'📶', cafeteria:'🍽️' };
+  return icons[key] || '✅';
+}
+
+async function handleSave() {
+  if (!Auth.isLoggedIn()) { showToast('Please login to save colleges', 'error'); return; }
+  const res = await api.saveCollege(collegeId);
+  if (res.ok) {
+    document.getElementById('saveBtn').textContent = res.data.saved ? '✅ Saved' : '🔖 Save College';
+    showToast(res.data.message, 'success');
+  }
+}
+
+function addToCompare() {
+  let list = JSON.parse(sessionStorage.getItem('compareList') || '[]');
+  if (!list.includes(collegeId)) {
+    list.push(collegeId);
+    sessionStorage.setItem('compareList', JSON.stringify(list));
+    showToast('Added to compare list!', 'success');
+  } else {
+    showToast('Already in compare list', 'info');
+  }
+}
+
+async function submitReview() {
+  const rating = parseInt(document.getElementById('reviewRating').value);
+  const comment = document.getElementById('reviewComment').value;
+  const err = document.getElementById('reviewError');
+  if (!comment.trim()) { err.textContent = 'Please write a comment'; err.classList.remove('hidden'); return; }
+
+  const res = await api.addReview(collegeId, { rating, comment });
+  if (res.ok) {
+    showToast('Review submitted!', 'success');
+    document.getElementById('reviewComment').value = '';
+  } else {
+    err.textContent = res.data.message;
+    err.classList.remove('hidden');
+  }
+}
+</script>
+</body>
+</html>
