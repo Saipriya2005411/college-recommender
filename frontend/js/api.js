@@ -1,5 +1,5 @@
 // API base URL — change this if your backend runs on a different port
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://college-recommender-1-y30e.onrender.com/api';
 
 const api = {
   // Generic request helper
